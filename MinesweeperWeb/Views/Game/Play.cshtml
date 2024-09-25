@@ -1,0 +1,19 @@
+﻿@model Board 
+@{
+	
+}
+<div class="main">
+	<div class="head">
+		<h1 class="text-center">column = @Model.Rows rows = @Model.Columns</h1>
+	</div>
+	<div class="grid-container" style="width: @(30*Model.Columns + 10)px; grid-template-columns: repeat(@Model.Columns, 30px); grid-template-rows: repeat(@Model.Rows, 30px);">
+		@for(int i = 0; i < Model.Rows; i++) {
+			@for(int j = 0; j < Model.Columns; j++) {
+				<div class="grid-item closed"></div>
+			}
+		}
+	</div>
+	<div class="grid-foot"></div>
+</div>
+
+

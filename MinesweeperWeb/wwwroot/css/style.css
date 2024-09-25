@@ -1,0 +1,32 @@
+﻿* {
+    outline: none;
+}
+.grid-container {
+    /*height: 20px;*/
+    /*width: 100%;*/
+    border: 1px solid black;
+    display: grid;
+    margin: 50px auto 0px;
+    border: 5px solid black;
+    background-color: grey;
+    opacity:0.9;
+    
+}
+.grid-item {
+    width: 30px;
+    height: 30px;
+    border-radius: 0;
+    aspect-ratio: 1;
+    text-align: center;
+    background-size: cover;
+    border: none;
+}
+.closed {
+    background-image: url("/Assets/img/closed.svg");
+}
+.opened {
+    background-image: url("/Assets/img/opened.svg");
+}
+.btn {
+    width: 100%;
+}
