@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Minesweeper.Models;
 using MinesweeperWeb.Models;
 
 namespace MinesweeperWeb.Controllers {
     public class GameController : Controller {
 
-
+        public IActionResult Index() {
+            return View();
+        }
         // GET
         public IActionResult Play() {
             return View();
@@ -15,8 +18,10 @@ namespace MinesweeperWeb.Controllers {
         [ValidateAntiForgeryToken]
         public IActionResult Play(Board board) {
             if(ModelState.IsValid) {
-                ViewBag.ContainerWidth = board.Columns;
-                ViewBag.ContainerHeight = board.Rows;
+                
+                //Board boardArr = new Board(board.Width, board.Height);
+                board.Generate();
+
                 return View(board);
             }
             return View(board);
