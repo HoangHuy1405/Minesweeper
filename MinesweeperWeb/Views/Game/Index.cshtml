@@ -1,21 +1,18 @@
 ﻿@model Board
-@* @{
-    ViewData["Title"] = "Minesweeper";
-} *@
 
 <div class="text-center">
     <h1 class="display-1 mb-8">Minesweeper</h1>
     <form asp-controller="Game" asp-action="Play" method="post">
-        @* @Html.AntiForgeryToken() <!-- Anti-forgery token for security --> *@
+        @Html.AntiForgeryToken() <!-- Anti-forgery token for security -->
         <div class="container w-25">
             <div class="mb-3">
                 <label asp-for="Height" class="h4"></label>
-                <input asp-for="Height" class="form-control" type="number" value="8"/>
+                <input asp-for="Height" class="form-control" type="number"/>
                 <span asp-validation-for="Height" class="text-danger"></span>
             </div>
             <div class="mb-3">
                 <label asp-for="Width" class="h4"></label>
-                <input asp-for="Width" class="form-control" type="number" value="8" />
+                <input asp-for="Width" class="form-control" type="number"/>
                 <span asp-validation-for="Width" class="text-danger"></span>
             </div>
             <button type="submit" class="btn btn-primary" style="width:150px">Play</button>

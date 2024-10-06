@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Minesweeper.Models;
 using MinesweeperWeb.Models;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace MinesweeperWeb.Controllers {
     public class GameController : Controller {
@@ -17,14 +18,37 @@ namespace MinesweeperWeb.Controllers {
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Play(Board board) {
-            if(ModelState.IsValid) {
-                
-                //Board boardArr = new Board(board.Width, board.Height);
-                board.Generate();
+            Console.WriteLine($"Width: {board.Width}, Height: {board.Height}");
+            if (ModelState.IsValid) {
+                Board newBoard = new Board(board.Width, board.Height);
+                newBoard.Generate(3,4);
 
-                return View(board);
+                // Store the board in temp
+                TempData["Board"] = JsonConvert.SerializeObject(newBoard);
+
+                return View(newBoard);
             }
-            return View(board);
+            return RedirectToAction("Index","Home");
+        }
+
+        private int clicks = 0;
+        [HttpPost]
+        public IActionResult Click([FromBody] Coordinate coordinate) {
+            clicks++;
+            int x = coordinate.X;
+            int y = coordinate.Y;
+
+            HashSet <KeyValuePair<int, int>> openList = new HashSet<KeyValuePair<int, int>>();
+            Board tempBoard = JsonConvert.DeserializeObject<Board>(TempData["Board"].ToString());
+            Board board = new Board(tempBoard.Width, tempBoard.Height);
+            if (clicks <= 1) {
+                board.Generate(x, y);
+                openList = board.Open(x, y);
+            } else {
+                openList = board.Open(x, y);
+            }
+
+            return Json(openList);
         }
     }
 }

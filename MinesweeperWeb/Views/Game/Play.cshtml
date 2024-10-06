@@ -5,35 +5,24 @@
 }
 <div class="main">
 	<div class="head">
-		<h1 class="text-center">column = @Model.Height rows = @Model.Width</h1>
+		<h1 class="text-center">rows = @Model.Height ,columns = @Model.Width</h1>
 	</div>
 	<div class="grid-container" style="width: @(30*Model.Width + 10)px; grid-template-columns: repeat(@Model.Width, 30px); grid-template-rows: repeat(@Model.Height, 30px);">
-		@for(int i = 0; i < Model.Height; i++) {
-			@for(int j = 0; j < Model.Width; j++) {
+		@for(int i = 0; i < Model.Width; i++) {
+			@for(int j = 0; j < Model.Height; j++) {
 				<div class="grid-item closed"></div>
 			}
 		}
 	</div>
 	<div class="grid-foot row">
-        <a asp-controller="Home" asp-action="Index" type="button" class="btn btn-primary mt-5 bg-dark w-25 mx-auto">Go Back</a>
+        <a asp-controller="Game" asp-action="Index" class="btn btn-primary mt-5 bg-dark w-25 mx-auto">Go Back</a>
+        <a class="btn btn-primary mt-5 bg-dark w-25 mx-auto text-white" onclick="openAll()">Open all</a>
     </div>
 
 	<script>
         var gridItems = document.querySelectorAll(".grid-item");
-        // call the function generateBoard to get initial board stored into a var
-        /*var board = [
-            [9, 1, 0, 0, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-        ]
-        */
-        let bombInt = 9;
         var board = @Html.Raw(JsonConvert.SerializeObject(Model.BoardArr));
+        var width = board[0].length;
         console.log(board);
         // check if grid item is a closed cell, which can only be clicked on
         gridItems.forEach((gridItem, index) => {
@@ -41,8 +30,10 @@
                 gridItem.addEventListener("click", function () {
                     gridItem.classList.remove("closed");
                     // clickable
-                    var x = Math.floor(index / board.length);
-                    var y = index % board.length;
+                    var x = Math.floor(index / width);
+                    var y = index % width;
+                    console.log(x, y)
+                    console.log(board.length)
 
                     if (board[x][y] == @Model.getLandminesInt()) {
                         gridItem.classList.add("mine");
@@ -55,6 +46,57 @@
                 })
             }
         })
+
+        function openAll() {
+            gridItems.forEach((gridItem, index) => {
+                if (gridItem.classList.contains("closed")) {
+                    gridItem.classList.remove("closed");
+                    // clickable
+                    var x = Math.floor(index / width);
+                    var y = index % width;
+
+                    if (board[x][y] == @Model.getLandminesInt()) {
+                        gridItem.classList.add("mine");
+                    } else if (board[x][y] == 0) {
+                        gridItem.classList.add("opened");
+                    } else {
+                        gridItem.classList.add("opened");
+                        gridItem.innerHTML = board[x][y];
+                    }
+                }
+            })
+        }
+
+        // 2d array that store the cell that needs to be checked if it blank
+        function openBlank() {
+            gridItems.forEach((gridItem, index) => {
+                gridItem.addEventListener("click", function() {
+                    var x = Math.floor(index / width);
+                    var y = index % width;
+                    console.log(x, y);
+
+                    // Send the (x, y) to backend using fetch
+                    fetch('/Game/Click', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ x: x, y: y }) // Send x, y as a JSON object
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Success:', data);
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+
+
+
+                })
+            })
+        }
+        openBlank();
     </script>
 </div>
 
