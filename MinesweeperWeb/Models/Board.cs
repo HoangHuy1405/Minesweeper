@@ -6,11 +6,11 @@ using System.ComponentModel.DataAnnotations;
 namespace MinesweeperWeb.Models {
     public class Board {
         [Required(ErrorMessage = "Width is required")]
-        [Range(8, 30, ErrorMessage = "Rows must be between 8 and 30")]
+        [Range(4, 30, ErrorMessage = "Rows must be between 8 and 30")]
         public int Height { get; set; }
 
         [Required(ErrorMessage = "Height is required")]
-        [Range(8, 30, ErrorMessage = "Columns must be between 8 and 30")]
+        [Range(4, 30, ErrorMessage = "Columns must be between 8 and 30")]
         public int Width { get; set; }
 
         public int intialX { get; set; }
@@ -21,7 +21,7 @@ namespace MinesweeperWeb.Models {
          * 0 present for empty
          * landminesInt present for the number of the landmines
          */
-        public int[,] BoardArr { get; }
+        public int[,] BoardArr { get; set; }
         public int Landmines { get; }
         private int LandminesInt = -8;
         public int getLandminesInt() { return LandminesInt; }
@@ -85,26 +85,38 @@ namespace MinesweeperWeb.Models {
                 }
             }
         }
-        public HashSet<KeyValuePair<int, int>> Open(int x, int y) {
+        public HashSet<KeyValuePair<int[], int>> Open(int x, int y) {
             HashSet<KeyValuePair<int, int>> cellsToBeChecked = new HashSet<KeyValuePair<int, int>>();
-            HashSet<KeyValuePair<int, int>> openList = new HashSet<KeyValuePair<int, int>>();
-            openList.Add(new KeyValuePair<int, int>(x, y));
+            HashSet<KeyValuePair<int, int>> cellsChecked = new HashSet<KeyValuePair<int, int>>();
+            HashSet<KeyValuePair<int[], int>> openList = new HashSet<KeyValuePair<int[], int>>();
+            
             if (BoardArr[x,y] != 0) {
+                openList.Add(new KeyValuePair<int[], int>(new int[] { x, y }, BoardArr[x, y]));
                 return openList;
             } else {
                 //rows
                 cellsToBeChecked.Add(new KeyValuePair<int, int>(x, y));
-                foreach(var cell in cellsToBeChecked) {
+                while (cellsToBeChecked.Count > 0) {
+                    var cell = cellsToBeChecked.First();
+                    
+
                     int _x = cell.Key;
                     int _y = cell.Value;
-                    if (_x == Height || _x < 0 || _y == Width || _y < 0) continue;
-                    openList.Add(new KeyValuePair<int, int>(x, y));
-                    if (BoardArr[_x, _y] != 0) 
-                    for (int i = _x - 1; x <= x+1; i++) {
-                        for(int j = _y - 1; j <= y+1; j++) {
-                            if (BoardArr[i, j] == 0) cellsToBeChecked.Add(new KeyValuePair<int, int>(i, j));
+                    
+                    openList.Add(new KeyValuePair<int[], int>(new int[] { _x, _y }, BoardArr[_x, _y]));
+                    if (BoardArr[_x, _y] != 0) {
+                        cellsToBeChecked.Remove(cell);
+                        continue;
+                    }
+                    for (int i = _x - 1; i <= _x+1; i++) {
+                        for (int j = _y - 1; j <= _y + 1; j++) {
+                            if (i >= Height || i < 0 || j >= Width || j < 0 || (i == _x && j == _y)) continue;
+                            if(!cellsChecked.Contains(cell)) cellsToBeChecked.Add(new KeyValuePair<int, int>(i, j));
+                            
                         }
                     }
+                    cellsChecked.Add(cell);
+                    cellsToBeChecked.Remove(cell);
                 }
             }
 

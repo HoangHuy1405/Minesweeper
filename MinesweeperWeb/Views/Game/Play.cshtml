@@ -25,6 +25,7 @@
         var width = board[0].length;
         console.log(board);
         // check if grid item is a closed cell, which can only be clicked on
+        /*
         gridItems.forEach((gridItem, index) => {
             if (gridItem.classList.contains("closed")) {
                 gridItem.addEventListener("click", function () {
@@ -46,7 +47,9 @@
                 })
             }
         })
+        */
 
+       /*
         function openAll() {
             gridItems.forEach((gridItem, index) => {
                 if (gridItem.classList.contains("closed")) {
@@ -66,37 +69,80 @@
                 }
             })
         }
+        */
 
         // 2d array that store the cell that needs to be checked if it blank
-        function openBlank() {
+        var clickCounter = 0
+        var cellsToBeOpened = null;
+        function click() {
             gridItems.forEach((gridItem, index) => {
                 gridItem.addEventListener("click", function() {
                     var x = Math.floor(index / width);
                     var y = index % width;
-                    console.log(x, y);
+                    clickCounter++;
+                    console.log("clicks = " ,clickCounter);
 
-                    // Send the (x, y) to backend using fetch
-                    fetch('/Game/Click', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ x: x, y: y }) // Send x, y as a JSON object
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Success:', data);
-                    })
-                    .catch((error) => {
-                        console.error('Error:', error);
-                    });
-
-
-
+                    // first click
+                    if (clickCounter == 1) {
+                        // Send the (x, y) to backend using fetch
+                        fetch('/Game/FirstClick', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ x: x, y: y }) // Send x, y as a JSON object
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Success:', data);
+                            openBlank(data);
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error);
+                        });
+                    } else {
+                        // normal click
+                        fetch('/Game/Click', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ x: x, y: y }) // Send x, y as a JSON object
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Success:', data);
+                            openBlank(data);
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error);
+                        });
+                    }
+                    
+                    
                 })
             })
         }
-        openBlank();
+        function openBlank(cellsToBeOpened) {
+            console.log(cellsToBeOpened)
+            // Convert to a list of indices (1D array) that need to be opened
+            
+            gridItems.forEach((gridItem, index) => {
+                cellsToBeOpened.forEach((cell) => {
+                   if(cell.key[0] * @Model.Width + cell.key[1] == index) {
+                        if (cell.value == @Model.getLandminesInt()) {
+                            gridItem.classList.add("mine");
+                        } else if (cell.value == 0) {
+                            gridItem.classList.add("opened");
+                        } else {
+                            gridItem.classList.add("opened");
+                            gridItem.innerHTML = cell.value;
+                        }
+                   }
+                });
+            })
+        }
+        click();
     </script>
 </div>
 
