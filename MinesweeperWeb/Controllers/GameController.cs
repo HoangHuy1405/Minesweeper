@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using MinesweeperWeb.Models;
+using MinesweeperWeb.Services;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace MinesweeperWeb.Controllers {
+namespace MinesweeperWeb.Controllers
+{
     public class GameController : Controller {
 
         public IActionResult Index() {
@@ -21,32 +24,52 @@ namespace MinesweeperWeb.Controllers {
             Console.WriteLine($"Width: {board.Width}, Height: {board.Height}");
             if (ModelState.IsValid) {
                 Board newBoard = new Board(board.Width, board.Height);
-                newBoard.Generate(3,4);
+                HttpContext.Session.SetInt32("width", board.Width);
+                HttpContext.Session.SetInt32("height", board.Height);
 
-                // Store the board in temp
-                TempData["Board"] = JsonConvert.SerializeObject(newBoard);
+                newBoard.Clear();
 
                 return View(newBoard);
             }
             return RedirectToAction("Index","Home");
         }
 
-        private int clicks = 0;
+        // first clicks, it will generate the board and store in session (cookie) for the other click
         [HttpPost]
-        public IActionResult Click([FromBody] Coordinate coordinate) {
-            clicks++;
+        public IActionResult FirstClick([FromBody] Coordinate coordinate) {
             int x = coordinate.X;
             int y = coordinate.Y;
 
-            HashSet <KeyValuePair<int, int>> openList = new HashSet<KeyValuePair<int, int>>();
-            Board tempBoard = JsonConvert.DeserializeObject<Board>(TempData["Board"].ToString());
-            Board board = new Board(tempBoard.Width, tempBoard.Height);
-            if (clicks <= 1) {
-                board.Generate(x, y);
-                openList = board.Open(x, y);
-            } else {
-                openList = board.Open(x, y);
-            }
+            int width = (int)HttpContext.Session.GetInt32("width");
+            int height = (int)HttpContext.Session.GetInt32("height");
+            Board board = new Board(width, height);
+
+            HashSet<KeyValuePair<int[], int>> openList = new HashSet<KeyValuePair<int[], int>>();
+
+            board.Generate(x, y);
+            int[] boardArr = Utilities.convertToOneD(board.BoardArr);
+            HttpContext.Session.Set("boardArr", boardArr);
+            openList = board.Open(x, y);
+
+            return Json(openList);
+        }
+
+        [HttpPost]
+        public IActionResult Click([FromBody] Coordinate coordinate) {
+            int x = coordinate.X;
+            int y = coordinate.Y;
+
+            int width = (int)HttpContext.Session.GetInt32("width");
+            int height = (int)HttpContext.Session.GetInt32("height");
+            Board board = new Board(width, height);
+
+            HashSet<KeyValuePair<int[], int>> openList = new HashSet<KeyValuePair<int[], int>>();
+
+            int[] boardArr1D = HttpContext.Session.Get<int[]>("boardArr");
+
+            int[,] boardArr = Utilities.convertToTwoD(boardArr1D, width, height);
+            board.BoardArr = boardArr;
+            openList = board.Open(x, y);
 
             return Json(openList);
         }
