@@ -1,7 +1,7 @@
 ﻿@model Board
 
 <div class="text-center">
-    <h1 class="display-1 mb-8">Minesweeper</h1>
+    <h1 class="display-1 mb-5">Minesweeper</h1>
     <form asp-controller="Game" asp-action="Play" method="post">
         @Html.AntiForgeryToken() <!-- Anti-forgery token for security -->
         <div class="container w-25">

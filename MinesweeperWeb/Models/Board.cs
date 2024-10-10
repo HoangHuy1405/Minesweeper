@@ -25,7 +25,7 @@ namespace MinesweeperWeb.Models {
         public int Landmines { get; }
         private int LandminesInt = -8;
         public int getLandminesInt() { return LandminesInt; }
-        float difficulty = 0.1f;
+        float difficulty = 0.15f;
 
         
         public Board() {
@@ -39,6 +39,11 @@ namespace MinesweeperWeb.Models {
             this.Landmines = (int)Math.Round(difficulty * this.Height * this.Width);
             BoardArr = new int[height, width];
         }
+        
+        public int getLandmines() {
+            return (int)Math.Round(difficulty * this.Height * this.Width);
+        }
+
         public void Clear() {
             for (int i = 0; i < Height; i++) {
                 for (int j = 0; j < Width; j++) {

@@ -26,6 +26,7 @@ namespace MinesweeperWeb.Controllers
                 Board newBoard = new Board(board.Width, board.Height);
                 HttpContext.Session.SetInt32("width", board.Width);
                 HttpContext.Session.SetInt32("height", board.Height);
+                HttpContext.Session.SetInt32("TotalBomb", board.getLandmines());
 
                 newBoard.Clear();
 
@@ -47,6 +48,7 @@ namespace MinesweeperWeb.Controllers
             HashSet<KeyValuePair<int[], int>> openList = new HashSet<KeyValuePair<int[], int>>();
 
             board.Generate(x, y);
+            
             int[] boardArr = Utilities.convertToOneD(board.BoardArr);
             HttpContext.Session.Set("boardArr", boardArr);
             openList = board.Open(x, y);
@@ -72,6 +74,12 @@ namespace MinesweeperWeb.Controllers
             openList = board.Open(x, y);
 
             return Json(openList);
+        }
+
+        [HttpGet]
+        public IActionResult GetTotalMines() {
+            int landmines = (int)HttpContext.Session.GetInt32("TotalBomb");
+            return Json(landmines);
         }
     }
 }

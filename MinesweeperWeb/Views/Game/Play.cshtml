@@ -5,18 +5,25 @@
 }
 <div class="main">
 	<div class="head">
-		<h1 class="text-center">rows = @Model.Height ,columns = @Model.Width</h1>
+		<h1 class="text-start">
+            @Model.Height x @Model.Width
+
+        </h1>
+        <h1 id="total-mines">total mines </h1>
+        <h1 id="timer">timer</h1>
 	</div>
-	<div class="grid-container" style="width: @(30*Model.Width + 10)px; grid-template-columns: repeat(@Model.Width, 30px); grid-template-rows: repeat(@Model.Height, 30px);">
-		@for(int i = 0; i < Model.Width; i++) {
-			@for(int j = 0; j < Model.Height; j++) {
-				<div class="grid-item closed"></div>
-			}
-		}
-	</div>
+    <div class="body-container mt-5">
+        <div class="grid-container" style="grid-template-columns: repeat(@Model.Width, 30px); grid-template-rows: repeat(@Model.Height, 30px);">
+            @for (int i = 0; i < Model.Width; i++) {
+                @for (int j = 0; j < Model.Height; j++) {
+                    <div class="grid-item closed"></div>
+                }
+            }
+        </div>
+    </div>
+	
 	<div class="grid-foot row">
         <a asp-controller="Game" asp-action="Index" class="btn btn-primary mt-5 bg-dark w-25 mx-auto">Go Back</a>
-        <a class="btn btn-primary mt-5 bg-dark w-25 mx-auto text-white" onclick="openAll()">Open all</a>
     </div>
 
 	<script>
@@ -24,56 +31,15 @@
         var board = @Html.Raw(JsonConvert.SerializeObject(Model.BoardArr));
         var width = board[0].length;
         console.log(board);
-        // check if grid item is a closed cell, which can only be clicked on
-        /*
-        gridItems.forEach((gridItem, index) => {
-            if (gridItem.classList.contains("closed")) {
-                gridItem.addEventListener("click", function () {
-                    gridItem.classList.remove("closed");
-                    // clickable
-                    var x = Math.floor(index / width);
-                    var y = index % width;
-                    console.log(x, y)
-                    console.log(board.length)
-
-                    if (board[x][y] == @Model.getLandminesInt()) {
-                        gridItem.classList.add("mine");
-                    } else if (board[x][y] == 0) {
-                        gridItem.classList.add("opened");
-                    } else {
-                        gridItem.classList.add("opened");
-                        gridItem.innerHTML = board[x][y];
-                    }
-                })
-            }
-        })
-        */
-
-       /*
-        function openAll() {
-            gridItems.forEach((gridItem, index) => {
-                if (gridItem.classList.contains("closed")) {
-                    gridItem.classList.remove("closed");
-                    // clickable
-                    var x = Math.floor(index / width);
-                    var y = index % width;
-
-                    if (board[x][y] == @Model.getLandminesInt()) {
-                        gridItem.classList.add("mine");
-                    } else if (board[x][y] == 0) {
-                        gridItem.classList.add("opened");
-                    } else {
-                        gridItem.classList.add("opened");
-                        gridItem.innerHTML = board[x][y];
-                    }
-                }
-            })
-        }
-        */
 
         // 2d array that store the cell that needs to be checked if it blank
         var clickCounter = 0
         var cellsToBeOpened = null;
+
+        // a flag list that contain the pos x,y of the user
+        var flagsCoordList = [];
+
+
         function click() {
             gridItems.forEach((gridItem, index) => {
                 gridItem.addEventListener("click", function() {
@@ -100,6 +66,7 @@
                         .catch((error) => {
                             console.error('Error:', error);
                         });
+
                     } else {
                         // normal click
                         fetch('/Game/Click', {
@@ -118,8 +85,6 @@
                             console.error('Error:', error);
                         });
                     }
-                    
-                    
                 })
             })
         }
@@ -142,7 +107,83 @@
                 });
             })
         }
+        
+        function rightClick() {
+            gridItems.forEach((gridItem, index) => {
+                
+                gridItem.addEventListener('contextmenu', function(event) {
+                    var x = Math.floor(index / width);
+                    var y = index % width;
+                    //console.log("x =" x, "y = " y);
+
+
+                    event.preventDefault();
+                    const flag = gridItem.querySelector(".flag");
+                    if (flag) {
+                        
+                        flag.remove(); // Remove the icon if it exists
+                        // Find the index of the (x, y) pair in the coordinates list
+                        const coordIndex = flagsCoordList.findIndex(coord => coord.x === x && coord.y === y);
+
+                        // Remove the (x, y) pair from the list
+                        if (coordIndex !== -1) {
+                            flagsCoordList.splice(coordIndex, 1);
+                        }
+                        totalBomb++;
+                        display();
+                    } else {
+                        // if total Bomb <= 0 cant add more flag or reduce more bomb
+                        if (totalBomb < 1) return;
+                        // Re-add the icon if it's not present
+                        const newIcon = document.createElement('i');
+                        newIcon.className = 'fa-solid fa-flag flag';
+                        gridItem.appendChild(newIcon);
+
+                        flagsCoordList.push({ x: x, y: y });
+                        // update bomb and update display
+                        totalBomb--;
+                        display();
+                    }
+
+                    console.log(flagsCoordList);
+                })
+            })
+        }
+        // get the total number of bombs
+        var totalBomb;
+        function getTotalMines() {
+            fetch('/Game/GetTotalMines', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success bomb:', data);
+                totalBomb = data;
+                display();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+        function display() {
+            let bombDisplay = document.querySelector("#total-mines");
+            bombDisplay.innerHTML = `<span>${totalBomb} <i class="fa-solid fa-bomb"></i></span>`
+        }
+        // get all the bombs (its pos) from backend if lose
+
+
+
+
+
+        // call function
+
+        getTotalMines();
         click();
+        rightClick();
+        
     </script>
 </div>
 
