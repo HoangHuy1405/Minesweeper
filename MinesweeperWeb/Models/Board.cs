@@ -21,6 +21,7 @@ namespace MinesweeperWeb.Models {
          * 0 present for empty
          * landminesInt present for the number of the landmines
          */
+        public List<Coordinate> bombList { get; }
         public int[,] BoardArr { get; set; }
         public int Landmines { get; }
         private int LandminesInt = -8;
@@ -68,7 +69,11 @@ namespace MinesweeperWeb.Models {
 
                 int row = coordinate[index] / Width;
                 int col = coordinate[index] % Width;
-
+                bombList = new List<Coordinate>();
+                Coordinate coord = new Coordinate();
+                coord.X = row;
+                coord.Y = col;
+                bombList.Add(coord);
                 BoardArr[row, col] = LandminesInt;
                 FillNum(row, col);
 

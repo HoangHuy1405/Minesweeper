@@ -81,5 +81,7 @@ namespace MinesweeperWeb.Controllers
             int landmines = (int)HttpContext.Session.GetInt32("TotalBomb");
             return Json(landmines);
         }
+
+        
     }
 }
