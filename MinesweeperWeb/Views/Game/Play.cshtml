@@ -62,6 +62,7 @@
                         .then(data => {
                             console.log('Success:', data);
                             openBlank(data);
+                            startTimer();
                         })
                         .catch((error) => {
                             console.error('Error:', error);
@@ -174,9 +175,33 @@
         }
         // get all the bombs (its pos) from backend if lose
 
+        var timer;
+        var playTime;
+        var time;
+        function startTimer(){
+            playTime = 0;
+            timer = setInterval(function(){
+                playTime++;
+                document.getElementById("timer").textContent = timeConversion_1(playTime);
+            }, 1000)
+        }
+        function timeConversion_1(time) {
+            if (time < 10) {
+                return "00" + time;
+            } else if (time < 100 && time > 9) {
+                return "0" + time;
+            } else {
+                return time;
+            }
+        }
 
-
-
+        function timeConversion_2(time) {
+            let minutes= Math.floor(time / 60);
+            if (minutes < 10) minutes = "0" + minutes;
+            let seconds = time % 60;
+            if (seconds < 10) seconds = "0" + seconds;
+            return minutes + ":" + seconds;
+        }
 
         // call function
 
