@@ -1,93 +1,90 @@
 ﻿using Microsoft.AspNetCore.Razor.Language.Extensions;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace MinesweeperWeb.Models {
     public class Board {
-        [Required(ErrorMessage = "Width is required")]
-        [Range(4, 30, ErrorMessage = "Rows must be between 8 and 30")]
-        public int Height { get; set; }
-
-        [Required(ErrorMessage = "Height is required")]
-        [Range(4, 30, ErrorMessage = "Columns must be between 8 and 30")]
-        public int Width { get; set; }
-
-        public int intialX { get; set; }
-        public int intialY {  get; set; }
-
-
         /*
          * 0 present for empty
          * landminesInt present for the number of the landmines
          */
-        public List<Coordinate> bombList { get; }
+        #region properties
+        public GridSize Size { get; set; }
+        public List<Coordinate> bombList { get; set; }
         public int[,] BoardArr { get; set; }
-        public int Landmines { get; }
+        public int Landmines { get; set; }
         private int LandminesInt = -8;
         public int getLandminesInt() { return LandminesInt; }
-        float difficulty = 0.15f;
+        public float Difficulty { get; set; }
+        #endregion
 
-        
-        public Board() {
-            this.Landmines = (int)Math.Round(difficulty * 8 * 8);
+        #region constructor
+        public Board(GridSize size, float difficulty = 0.15f) {
+            Size = size;
+            Difficulty = difficulty;
+            this.Landmines = (int)Math.Round(difficulty * Size.Height * Size.Width);
+            BoardArr = new int[Size.Height, Size.Width];
+            bombList = new List<Coordinate>();
+        }
+        #endregion
 
-            BoardArr = new int[8, 8];
-        }
-        public Board(int width, int height) {
-            this.Height = height;
-            this.Width = width;
-            this.Landmines = (int)Math.Round(difficulty * this.Height * this.Width);
-            BoardArr = new int[height, width];
-        }
-        
+        #region functions
+
+        #region get values
         public int getLandmines() {
-            return (int)Math.Round(difficulty * this.Height * this.Width);
+            return (int)Math.Round(Difficulty * Size.Height * Size.Width);
         }
+        public int GetValueFromCoordinate(Coordinate coordinate) => BoardArr[coordinate.X, coordinate.Y];
+        #endregion
 
+        #region generate landmines
         public void Clear() {
-            for (int i = 0; i < Height; i++) {
-                for (int j = 0; j < Width; j++) {
+            for (int i = 0; i < Size.Height; i++) {
+                for (int j = 0; j < Size.Width; j++) {
                     BoardArr[i, j] = 0;
                 }
             }
         }
-        public void Generate(int x, int y) {
+        public void Generate(Coordinate coordinate) {
             Clear();
-            PlantMines(x, y);
+            PlantMines(coordinate);
         }
-        private void PlantMines(int x, int y) {
-            int range = Height * Width;
+        private void PlantMines(Coordinate coordinate) {
+            int range = Size.Height * Size.Width;
 
-            List<int> coordinate = Enumerable.Range(0, range).ToList();
-            coordinate.RemoveAt(x*Width + y);
+            List<int> validCoordinates = Enumerable.Range(0, range).ToList();
+            validCoordinates.RemoveAt(coordinate.X * Size.Width + coordinate.Y);
             range--;
             Random rand = new Random();
 
             for (int i = 0; i < Landmines; i++) {
                 int index = rand.Next(range--);
 
-                int row = coordinate[index] / Width;
-                int col = coordinate[index] % Width;
-                bombList = new List<Coordinate>();
-                Coordinate coord = new Coordinate();
-                coord.X = row;
-                coord.Y = col;
-                bombList.Add(coord);
+                int row = validCoordinates[index] / Size.Width;
+                int col = validCoordinates[index] % Size.Width;
                 BoardArr[row, col] = LandminesInt;
-                FillNum(row, col);
 
-                coordinate.RemoveAt(index);
+                Coordinate coor = new Coordinate {
+                    X = row,
+                    Y = col
+                };
+
+                bombList.Add(coor);
+                FillNum(coor);
+
+                validCoordinates.RemoveAt(index);
             }
         }
-        private void FillNum(int row, int col) {
-            for (int i = row - 1; i <= row + 1; i++) {
+        private void FillNum(Coordinate coordinate) {
+            for (int i = coordinate.X - 1; i <= coordinate.X + 1; i++) {
                 // if row go over up and low boundary then skip
-                if (i < 0 || i >= Height) continue;
+                if (i < 0 || i >= Size.Height) continue;
 
-                for (int j = col - 1; j <= col + 1; j++) {
+                for (int j = coordinate.Y - 1; j <= coordinate.Y + 1; j++) {
                     //if col go over left and right boundary then skip
-                    if (j < 0 || j >= Width) continue;
+                    if (j < 0 || j >= Size.Width) continue;
                     // if landmines then skip
                     if (BoardArr[i, j] == LandminesInt) continue;
 
@@ -95,34 +92,110 @@ namespace MinesweeperWeb.Models {
                 }
             }
         }
-        public HashSet<KeyValuePair<int[], int>> Open(int x, int y) {
+        #endregion
+
+        #region get list of coordinate
+        public Dictionary<Coordinate, int> ListOfCoordinateToOpenWithValue(Coordinate coordinate)
+        {
+            Dictionary<Coordinate, int> keyValuePairs = [];
+            List<Coordinate> coordinates = ListOfCoordinateToOpen(coordinate);
+            foreach (Coordinate c in coordinates)
+            {
+                keyValuePairs.Add(c, this.GetValueFromCoordinate(c));
+            }
+
+            return keyValuePairs;
+        }
+        private List<Coordinate> ListOfCoordinateToOpen(Coordinate coordinate)
+        {
+            List<Coordinate> listToOpen = [];
+            listToOpen.Add(coordinate);
+
+            if (GetValueFromCoordinate(coordinate) != 0) return listToOpen; //if that coordinate contain N*, dont need to open their neighbor
+
+            int index = 0;
+            do
+            {
+                Coordinate current = listToOpen[index];
+
+                if (GetValueFromCoordinate(current) != 0) continue; //if the value is N*, dont need to check the neighbor 
+
+                //get neighbors and check. If not exist, add into the list
+                List<Coordinate> neigbors = GetNeighbors(current);
+                foreach (Coordinate c in neigbors)
+                {
+                    if (!listToOpen.Contains(c)) listToOpen.Add(c);
+                }
+            } while (++index < listToOpen.Count);
+            return listToOpen;
+        }
+        private List<Coordinate> GetNeighbors(Coordinate coordinate)
+        {
+            List<Coordinate> neighbors = [];
+
+            int boardHeight = Size.Height;
+            int boardWidth = Size.Width;
+
+            int x = coordinate.X;
+            int y = coordinate.Y;
+
+            for (int row = x - 1; row <= x + 1; row++)
+            {
+                if (row >= boardHeight || row < 0) continue; // out of bound then continue
+                for (int col = y - 1; col <= y + 1; col++)
+                {
+                    if (col >= boardWidth || col < 0) continue; // out of bound then continue
+
+                    Coordinate currentCoordinate = new Coordinate
+                    {
+                        X = row, 
+                        Y = col
+                    };
+
+                    if (currentCoordinate.Equals(coordinate)) continue; // not add the current coordinate
+
+                    neighbors.Add(currentCoordinate);// add into neighbors
+                }
+            }
+
+            return neighbors;
+        }
+        public HashSet<KeyValuePair<int[], int>> Open(int x, int y)
+        {
             HashSet<KeyValuePair<int, int>> cellsToBeChecked = new HashSet<KeyValuePair<int, int>>();
             HashSet<KeyValuePair<int, int>> cellsChecked = new HashSet<KeyValuePair<int, int>>();
             HashSet<KeyValuePair<int[], int>> openList = new HashSet<KeyValuePair<int[], int>>();
-            
-            if (BoardArr[x,y] != 0) {
+
+            if (BoardArr[x, y] != 0)
+            {
                 openList.Add(new KeyValuePair<int[], int>(new int[] { x, y }, BoardArr[x, y]));
                 return openList;
-            } else {
+            }
+            else
+            {
                 //rows
                 cellsToBeChecked.Add(new KeyValuePair<int, int>(x, y));
-                while (cellsToBeChecked.Count > 0) {
+                while (cellsToBeChecked.Count > 0)
+                {
                     var cell = cellsToBeChecked.First();
-                    
+
 
                     int _x = cell.Key;
                     int _y = cell.Value;
-                    
+
                     openList.Add(new KeyValuePair<int[], int>(new int[] { _x, _y }, BoardArr[_x, _y]));
-                    if (BoardArr[_x, _y] != 0) {
+                    if (BoardArr[_x, _y] != 0)
+                    {
                         cellsToBeChecked.Remove(cell);
                         continue;
                     }
-                    for (int i = _x - 1; i <= _x+1; i++) {
-                        for (int j = _y - 1; j <= _y + 1; j++) {
-                            if (i >= Height || i < 0 || j >= Width || j < 0 || (i == _x && j == _y)) continue;
-                            if(!cellsChecked.Contains(cell)) cellsToBeChecked.Add(new KeyValuePair<int, int>(i, j));
-                            
+                    for (int i = _x - 1; i <= _x + 1; i++)
+                    {
+                        for (int j = _y - 1; j <= _y + 1; j++)
+                        {
+                            if (i >= Size.Height || i < 0 || j >= Size.Width || j < 0 || (i == _x && j == _y)) continue;
+                            if (!cellsChecked.Contains(cell)) cellsToBeChecked.Add(new KeyValuePair<int, int>(i, j));
+
                         }
                     }
                     cellsChecked.Add(cell);
@@ -133,21 +206,36 @@ namespace MinesweeperWeb.Models {
             return openList;
         }
 
-        //public int countLandmines()
-        //{
-        //    int count = 0;
-        //    for (int i = 0;i < Height; i++)
-        //    {
-        //        for ( int j = 0; j < Width; j++)
-        //        {
-        //            if (Board[i, j] == landminesInt)
-        //            {
-        //                count++;
-        //            }
-        //        }
-        //    }
-        //    return count;
-        //}
+        #endregion
 
+        #region convert
+        public string MSBoardToJson()
+        {
+            string json = JsonConvert.SerializeObject(this);
+            return json;
+        }
+        public static Board MSBoardFromJson(string json)
+        {
+            Board msboard = null;
+            if (!string.IsNullOrEmpty(json))
+            {
+                msboard = JsonConvert.DeserializeObject<Board>(json);
+            }
+            return msboard;
+        }
+        public static object GetVarOfDictionary(Dictionary<Coordinate, int> dictionary)
+        {
+            var jsonArray = dictionary.Select(item => new
+            {
+                x = item.Key.X,
+                y = item.Key.Y,
+                value = item.Value
+            });
+
+            return jsonArray;
+        }
+        #endregion
+
+        #endregion
     }
 }

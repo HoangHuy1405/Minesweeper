@@ -1,21 +1,21 @@
 ﻿@model Board 
 @using Newtonsoft.Json;
 @{
-	
+    GridSize size = Model.Size;
 }
 <div class="main">
 	<div class="head">
 		<h1 class="text-start">
-            @Model.Height x @Model.Width
+            @size.Height x @size.Width
 
         </h1>
         <h1 id="total-mines">total mines </h1>
         <h1 id="timer">timer</h1>
 	</div>
     <div class="body-container mt-5">
-        <div class="grid-container" style="grid-template-columns: repeat(@Model.Width, 30px); grid-template-rows: repeat(@Model.Height, 30px);">
-            @for (int i = 0; i < Model.Width; i++) {
-                @for (int j = 0; j < Model.Height; j++) {
+        <div class="grid-container" style="grid-template-columns: repeat(@size.Width, 30px); grid-template-rows: repeat(@size.Height, 30px);">
+            @for (int i = 0; i < size.Width; i++) {
+                @for (int j = 0; j < size.Height; j++) {
                     <div class="grid-item closed"></div>
                 }
             }
@@ -28,9 +28,10 @@
 
 	<script>
         var gridItems = document.querySelectorAll(".grid-item");
-        var board = @Html.Raw(JsonConvert.SerializeObject(Model.BoardArr));
-        var width = board[0].length;
-        console.log(board);
+        // var board = @Html.Raw(JsonConvert.SerializeObject(Model.BoardArr));
+        // var width = board[0].length;
+        // console.log(board);
+        var width = @size.Width;
 
         // 2d array that store the cell that needs to be checked if it blank
         var clickCounter = 0
@@ -60,7 +61,7 @@
                         })
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Success:', data);
+                            console.log('Success firts click:', data);
                             openBlank(data);
                             startTimer();
                         })
@@ -94,8 +95,11 @@
             // Convert to a list of indices (1D array) that need to be opened
             
             gridItems.forEach((gridItem, index) => {
+                console.log("Succes gridItem");
                 cellsToBeOpened.forEach((cell) => {
-                   if(cell.key[0] * @Model.Width + cell.key[1] == index) {
+                    console.log("Succes cellsToBeOpened");
+                    console.log(cell);
+                   if(cell.x * @size.Width + cell.y == index) {
                         if (cell.value == @Model.getLandminesInt()) {
                             gridItem.classList.add("mine");
                         } else if (cell.value == 0) {
