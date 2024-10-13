@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Razor.Language.Extensions;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using Newtonsoft.Json;
 
 namespace MinesweeperWeb.Models {
     public class Board {
@@ -95,6 +91,8 @@ namespace MinesweeperWeb.Models {
         #endregion
 
         #region get list of coordinate
+
+        #region to open
         public Dictionary<Coordinate, int> ListOfCoordinateToOpenWithValue(Coordinate coordinate)
         {
             Dictionary<Coordinate, int> keyValuePairs = [];
@@ -205,6 +203,10 @@ namespace MinesweeperWeb.Models {
 
             return openList;
         }
+        #endregion
+
+        #region already open
+        #endregion
 
         #endregion
 
