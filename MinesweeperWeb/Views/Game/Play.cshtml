@@ -33,6 +33,7 @@
         // console.log(board);
         var width = @size.Width;
 
+
         // 2d array that store the cell that needs to be checked if it blank
         var clickCounter = 0
         var cellsToBeOpened = null;
@@ -48,7 +49,6 @@
                     var y = index % width;
                     clickCounter++;
                     console.log("clicks = " ,clickCounter);
-
                     // first click
                     if (clickCounter == 1) {
                         // Send the (x, y) to backend using fetch
@@ -82,6 +82,7 @@
                         .then(data => {
                             console.log('Success:', data);
                             openBlank(data);
+                            checkBomb();
                         })
                         .catch((error) => {
                             console.error('Error:', error);
@@ -95,10 +96,10 @@
             // Convert to a list of indices (1D array) that need to be opened
             
             gridItems.forEach((gridItem, index) => {
-                console.log("Succes gridItem");
+                // console.log("Succes gridItem");
                 cellsToBeOpened.forEach((cell) => {
-                    console.log("Succes cellsToBeOpened");
-                    console.log(cell);
+                    // console.log("Succes cellsToBeOpened");
+                    // console.log(cell);
                    if(cell.x * @size.Width + cell.y == index) {
                         if (cell.value == @Model.getLandminesInt()) {
                             gridItem.classList.add("mine");
@@ -111,6 +112,35 @@
                    }
                 });
             })
+        }
+
+        function checkBomb() {
+            fetch('/Game/GetBombList', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(bomb => {
+                        const indxbomb = bomb.x * @size.Width + bomb.y;
+                        // Add "mine" class to show bomb
+                        
+                        
+                        gridItems.forEach((gridItem, index) => {
+                            if (indxbomb == index) {
+                                if (!gridItem.classList.contains("mine")) {
+                                    gridItem.classList.remove("closed");
+                                    gridItem.classList.add("mine");
+                                }
+                            }
+                        })
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error fetching bomb list:', error);
+                });
         }
         
         function rightClick() {
@@ -206,6 +236,9 @@
             if (seconds < 10) seconds = "0" + seconds;
             return minutes + ":" + seconds;
         }
+
+        
+
 
         // call function
 

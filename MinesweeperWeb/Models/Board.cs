@@ -8,7 +8,7 @@ namespace MinesweeperWeb.Models {
          */
         #region properties
         public GridSize Size { get; set; }
-        public List<Coordinate> bombList { get; set; }
+        public List<Coordinate> BombList { get; set; }
         public int[,] BoardArr { get; set; }
         public int Landmines { get; set; }
         private int LandminesInt = -8;
@@ -22,7 +22,7 @@ namespace MinesweeperWeb.Models {
             Difficulty = difficulty;
             this.Landmines = (int)Math.Round(difficulty * Size.Height * Size.Width);
             BoardArr = new int[Size.Height, Size.Width];
-            bombList = new List<Coordinate>();
+            BombList = new List<Coordinate>();
         }
         #endregion
 
@@ -47,32 +47,44 @@ namespace MinesweeperWeb.Models {
             Clear();
             PlantMines(coordinate);
         }
-        private void PlantMines(Coordinate coordinate) {
+        private void PlantMines(Coordinate coordinate)
+        {
             int range = Size.Height * Size.Width;
-
             List<int> validCoordinates = Enumerable.Range(0, range).ToList();
             validCoordinates.RemoveAt(coordinate.X * Size.Width + coordinate.Y);
             range--;
+
             Random rand = new Random();
 
-            for (int i = 0; i < Landmines; i++) {
+            for (int i = 0; i < Landmines; i++)
+            {
                 int index = rand.Next(range--);
 
                 int row = validCoordinates[index] / Size.Width;
                 int col = validCoordinates[index] % Size.Width;
                 BoardArr[row, col] = LandminesInt;
 
-                Coordinate coor = new Coordinate {
+                Coordinate coor = new Coordinate
+                {
                     X = row,
                     Y = col
                 };
 
-                bombList.Add(coor);
+                BombList.Add(coor);  // Add bomb position to BombList
+                Console.WriteLine($"Bomb placed at: ({row}, {col})");  // Log bomb placement
                 FillNum(coor);
 
                 validCoordinates.RemoveAt(index);
             }
+
+            // Debug output to check BombList after all bombs are placed
+            Console.WriteLine("Final BombList:");
+            foreach (var bomb in BombList)
+            {
+                Console.WriteLine($"Bomb at position ({bomb.X}, {bomb.Y})");
+            }
         }
+
         private void FillNum(Coordinate coordinate) {
             for (int i = coordinate.X - 1; i <= coordinate.X + 1; i++) {
                 // if row go over up and low boundary then skip

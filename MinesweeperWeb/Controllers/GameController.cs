@@ -95,6 +95,20 @@ namespace MinesweeperWeb.Controllers
             return Json(landmines);
         }
 
-        
+        [HttpGet]
+        public IActionResult GetBombList()
+        {
+            string boardJson = HttpContext.Session.GetString("board");
+            if (string.IsNullOrEmpty(boardJson))
+            {
+                return Json(new List<Coordinate>()); // Return an empty list if no board data is found
+            }
+
+            Board board = Board.MSBoardFromJson(boardJson);
+            return Json(board.BombList);
+        }
+
+
+
     }
 }
